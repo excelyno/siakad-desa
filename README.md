@@ -143,13 +143,6 @@ src/
 ```
 
 ---
-
-## 📸 Screenshots
-
-*(Tambahkan screenshot aplikasi di sini nanti, misal halaman Login, Dashboard, dan Preview Surat)*
-
----
-
 ## 🤝 Kontribusi
 
 Pull Request sangat dipersilakan. Untuk perubahan besar, harap buka **Issue** terlebih dahulu untuk mendiskusikan apa yang ingin Anda ubah atau tambahkan.
