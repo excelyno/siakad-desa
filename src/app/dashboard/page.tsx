@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, FileCheck } from "lucide-react"
 import Link from "next/link"
+import PrintButton from "@/components/PrintButton"
 
 // Fungsi ini berjalan di Server (Server Component) - Aman & Cepat
 async function getLetterTypes() {

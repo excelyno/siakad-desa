@@ -1,48 +1,68 @@
-import Link from "next/link"
-import { LayoutDashboard, FileText, User, LogOut } from "lucide-react"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    return (
-        <div className="flex min-h-screen bg-slate-50">
-            {/* Sidebar Sederhana */}
-            <aside className="w-64 bg-white border-r hidden md:block">
-                <div className="p-6">
-                    <h1 className="text-xl font-bold text-slate-800">SIAKAD Desa</h1>
-                    <p className="text-sm text-slate-500">Portal Warga</p>
-                </div>
-                <nav className="mt-6 px-4 space-y-2">
-                    <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 bg-slate-100 rounded-lg">
-                        <LayoutDashboard size={20} />
-                        <span>Layanan</span>
-                    </Link>
-                    <Link href="/dashboard/history" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg">
-                        <FileText size={20} />
-                        <span>Riwayat Surat</span>
-                    </Link>
-                    <Link href="/profile" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg">
-                        <User size={20} />
-                        <span>Profil Saya</span>
-                    </Link>
-                </nav>
-            </aside>
+    const cookieStore = await cookies()
 
-            {/* Main Content */}
-            <main className="flex-1 p-4 md:p-8">
-                <header className="mb-8 flex justify-between items-center">
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-900">Selamat Datang, Warga</h2>
-                        <p className="text-slate-500">Silakan pilih layanan surat yang Anda butuhkan.</p>
-                    </div>
-                    <button className="text-sm text-red-600 font-medium flex items-center gap-2">
-                        <LogOut size={16} /> Logout
-                    </button>
-                </header>
-                {children}
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value
+                },
+            },
+        }
+    )
+
+    // Ambil data User & Profile sekaligus
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        redirect('/login')
+    }
+
+    // Ambil detail nama dari tabel profiles (opsional, biar cantik di sidebar)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+    // Gabungkan data auth user + data profile database
+    const userData = {
+        email: user.email,
+        full_name: profile?.full_name || user.email, // Fallback ke email kalau nama belum diset
+        ...profile
+    }
+
+    return (
+        <SidebarProvider>
+            {/* PENTING: Oper data user ke sidebar disini! */}
+            <AppSidebar user={userData} />
+
+            <main className="w-full">
+                <div className="flex items-center gap-2 p-4 border-b bg-white sticky top-0 z-10">
+                    <SidebarTrigger />
+                    <Separator orientation="vertical" className="h-6" />
+                    <h1 className="font-semibold text-sm md:text-base text-slate-700">
+                        Sistem Informasi Desa
+                    </h1>
+                </div>
+
+                <div className="p-4 md:p-6 bg-slate-50 min-h-[calc(100vh-65px)]">
+                    {children}
+                </div>
             </main>
-        </div>
+        </SidebarProvider>
     )
 }
